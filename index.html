@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Sun</title>
+    <style>
+        body { 
+            margin: 0; 
+            background-color: #000; 
+            overflow: hidden; 
+        }
+        #sun-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        /* CSS Glow for atmosphere */
+        canvas {
+            filter: drop-shadow(0 0 30px #ff6600);
+            cursor: grab; /* Shows a hand icon */
+        }
+        canvas:active {
+            cursor: grabbing; /* Closes hand when clicking */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sun-container"></div>
+
+    <script type="module">
+        // 1. IMPORT THREE.JS AND ORBIT CONTROLS
+        import * as THREE from 'https://cdn.skypack.dev/three@0.128.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/OrbitControls.js';
+
+        // 2. SCENE SETUP
+        const container = document.getElementById('sun-container');
+        const scene = new THREE.Scene();
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 2.5;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // 3. CREATE THE SUN
+        const geometry = new THREE.SphereGeometry(1, 64, 64);
+        const textureLoader = new THREE.TextureLoader();
+        
+        // High-res sun texture
+        const sunTexture = textureLoader.load('https://upload.wikimedia.org/wikipedia/commons/9/99/Map_of_the_full_sun.jpg');
+        
+        const material = new THREE.MeshBasicMaterial({ 
+            map: sunTexture,
+            color: 0xffddaa 
+        });
+
+        const sun = new THREE.Mesh(geometry, material);
+        scene.add(sun);
+
+        // 4. ADD ORBIT CONTROLS (This enables the dragging)
+        const controls = new OrbitControls(camera, renderer.domElement);
+        
+        // --- CONTROL SETTINGS ---
+        controls.enableDamping = true; // Adds "weight" to the spin (smooth stop)
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = false;   // Set to true if you want to allow zooming in/out
+        controls.autoRotate = true;    // Sun spins automatically...
+        controls.autoRotateSpeed = 2.0; // ...until you grab it!
+
+        // 5. ANIMATION LOOP
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update the controls every frame (required for damping & autoRotate)
+            controls.update();
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
